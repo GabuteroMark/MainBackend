@@ -185,25 +185,37 @@ async function getAllActivityLogs(filters = {}) {
         throw new Error('Error retrieving activities');
       }
     }
-async function refreshToken({ token, ipAddress }) { 
-    const refreshToken = await getRefreshToken(token); 
-    const account = await refreshToken.getAccount();
+    async function refreshToken({ token, ipAddress }) {
 
-    const newRefreshToken = generateRefreshToken (account, ipAddress); 
-    refreshToken.revoked = Date.now();
-    refreshToken.revokedByIp = ipAddress;
-    refreshToken.replacedByToken = newRefreshToken.token;
-    await refreshToken.save();
-    await newRefreshToken.save();
+        if (!token) {
+            throw new Error('No refresh token provided');
+        }
     
-    const jwtToken = generateJwtToken(account);
+        const refreshToken = await getRefreshToken(token);
     
-    return {
-        ...basicDetails (account),
-        jwtToken,
-        refreshToken: newRefreshToken.token
-    };
-}
+        const account = await refreshToken.getAccount();
+    
+        if (!account) {
+            throw new Error('Account not found');
+        }
+    
+        const newRefreshToken = generateRefreshToken(account, ipAddress);
+    
+        refreshToken.revoked = Date.now();
+        refreshToken.revokedByIp = ipAddress;
+        refreshToken.replacedByToken = newRefreshToken.token;
+    
+        await refreshToken.save();
+        await newRefreshToken.save();
+    
+        const jwtToken = generateJwtToken(account);
+    
+        return {
+            ...basicDetails(account),
+            jwtToken,
+            refreshToken: newRefreshToken.token
+        };
+    }
 async function revokeToken({ token, ipAddress }) { 
     const refreshToken = await getRefreshToken (token);
     
