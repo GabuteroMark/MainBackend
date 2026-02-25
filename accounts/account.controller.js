@@ -263,6 +263,14 @@ function getAllActivityLogs(req, res, next) {
 }
 
 function setTokenCookie(res, token) {
-    const cookieOptions = { httpOnly: true, expires: new Date(Date.now() + 7*24*60*60*1000) };
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,          // REQUIRED for HTTPS
+        sameSite: 'none',      // REQUIRED for cross-site cookies
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    };
+
     res.cookie('refreshToken', token, cookieOptions);
 }
