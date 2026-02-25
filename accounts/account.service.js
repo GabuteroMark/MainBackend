@@ -185,36 +185,15 @@ async function getAllActivityLogs(filters = {}) {
         throw new Error('Error retrieving activities');
       }
     }
-    async function refreshToken({ token, ipAddress }) {
-
-        if (!token) {
-            throw new Error('No refresh token provided');
-        }
+    async function refreshToken(req, res, next) {
+        const token = req.cookies.refreshToken;
     
-        const refreshToken = await getRefreshToken(token);
-    
-        const account = await refreshToken.getAccount();
-    
-        if (!account) {
-            throw new Error('Account not found');
-        }
-    
-        const newRefreshToken = generateRefreshToken(account, ipAddress);
-    
-        refreshToken.revoked = Date.now();
-        refreshToken.revokedByIp = ipAddress;
-        refreshToken.replacedByToken = newRefreshToken.token;
-    
-        await refreshToken.save();
-        await newRefreshToken.save();
-    
-        const jwtToken = generateJwtToken(account);
-    
-        return {
-            ...basicDetails(account),
-            jwtToken,
-            refreshToken: newRefreshToken.token
-        };
+        accountService.refreshToken({
+            token,
+            ipAddress: req.ip
+        })
+            .then(account => res.json(account))
+            .catch(next);
     }
 async function revokeToken({ token, ipAddress }) { 
     const refreshToken = await getRefreshToken (token);
