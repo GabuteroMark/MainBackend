@@ -21,7 +21,7 @@ app.use('/download', express.static(path.join(__dirname, 'generated')));
 app.use('/api/grade-levels', require('./grade-levels/grade-level.controller'));
 app.use('/api', require('./subjects/subject.controller')); 
 app.use('/api', require('./questions/question.controller'));
-app.use('/api', require('./accounts/account.controller'));
+app.use('/api/accounts', require('./accounts/account.controller'));
 // app.use('/api', require('./upload/upload.controller'));
 
 // ================= ERROR HANDLER =================
