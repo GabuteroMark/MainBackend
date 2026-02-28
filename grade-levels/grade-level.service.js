@@ -11,8 +11,12 @@ module.exports = {
     updateSubject
 };
 
-async function getAllGradeLevel() {
-    return db.GradeLevel.findAll();
+async function getAllGradeLevel(academicLevel) {
+    const where = {};
+    if (academicLevel) {
+        where.academicLevel = academicLevel;
+    }
+    return db.GradeLevel.findAll({ where });
 }
 
 async function getGradeLevelById(id) {
@@ -23,13 +27,15 @@ async function getGradeLevelById(id) {
 
 async function createGradeLevel(params) {
     return db.GradeLevel.create({
-        name: params.name
+        name: params.name,
+        academicLevel: params.academicLevel
     });
 }
 
 async function updateGradeLevel(id, params) {
     const gradeLevel = await getGradeLevelById(id);
     gradeLevel.name = params.name;
+    gradeLevel.academicLevel = params.academicLevel;
     await gradeLevel.save();
     return gradeLevel;
 }

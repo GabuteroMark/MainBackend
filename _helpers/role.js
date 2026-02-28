@@ -1,5 +1,5 @@
-// module.exports = {
-//     Admin: 'Admin',
-//     Staff: 'Staff',
-//     User: 'User'
-// }
+module.exports = {
+    Admin: 'Admin',
+    Teacher: 'Teacher',
+    Coordinator: 'Coordinator'
+};

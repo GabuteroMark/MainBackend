@@ -200,7 +200,7 @@ function createSchema(req, res, next) {
         phoneNumber: Joi.string().length(11).pattern(/^(09|\+639)\d{9}$/).required(),
         password: Joi.string().min(6).required(),
         confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
-        role: Joi.string().valid(Role.Admin, Role.User, Role.Staff).required()
+        role: Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).required()
     });
     validateRequest(req, next, schema);
 }
@@ -222,14 +222,16 @@ function updateSchema(req, res, next) {
         confirmPassword: Joi.string().valid(Joi.ref('password')).empty('')
     };
     if (req.user.role === Role.Admin) {
-        schemaRules.role = Joi.string().valid(Role.Admin, Role.User, Role.Staff).empty('');
+        schemaRules.role = Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).empty('');
     }
     const schema = Joi.object(schemaRules).with('password', 'confirmPassword');
     validateRequest(req, next, schema);
 }
 
 function update(req, res, next) {
+    // Debug log for unauthorized check
     if (Number(req.params.id) !== req.user.id && req.user.role !== Role.Admin) {
+        console.log(`[DEBUG] Update 401: TargetId: ${req.params.id}, CurrentUserId: ${req.user.id}, CurrentRole: ${req.user.role}`);
         return res.status(401).json({ message: 'Unauthorized' });
     }
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;

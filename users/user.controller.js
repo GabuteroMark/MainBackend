@@ -5,23 +5,23 @@ const validateRequest = require('_middleware/validate-request');
 const Role = require('_helpers/role');
 const userService = require('./user.service');
 
-router.get('/', getAll); 
+router.get('/', getAll);
 router.get('/search', search);
-router.get('/searchAll',searchAll);  
+router.get('/searchAll', searchAll);
 router.get('/:id', getById);
-router.post('/',createSchema, create);
-router.put('/:id',updateSchema, update);
-router.delete('/:id',_delete);
+router.post('/', createSchema, create);
+router.put('/:id', updateSchema, update);
+router.delete('/:id', _delete);
 
 router.put('/:id/role', updateRoleSchema, updateRole);
 
 router.get('/:id/preferences', getPreferences);
-router.put('/:id/preferences',updatePreferences);
+router.put('/:id/preferences', updatePreferences);
 
 router.put('/:id/password', changePassSchema, changePass);
 
 router.post('/login', loginSchema, login);
-router.post('/logout',  logout, logoutSchema);
+router.post('/logout', logout, logoutSchema);
 router.get('/:id/activity', getActivities);
 
 router.put('/:id/deactivate', deactivateUser);
@@ -52,13 +52,13 @@ function update(req, res, next) {
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const browserInfo = req.headers['user-agent'] || 'Unknown Browser';
 
-    userService.update(req.params.id, { 
-        ...req.body, 
-        ipAddress, 
-        browserInfo 
+    userService.update(req.params.id, {
+        ...req.body,
+        ipAddress,
+        browserInfo
     })
-    .then(() => res.json({ message: 'User updated' }))
-    .catch(next);
+        .then(() => res.json({ message: 'User updated' }))
+        .catch(next);
 }
 function _delete(req, res, next) {
     userService.delete(req.params.id)
@@ -66,11 +66,11 @@ function _delete(req, res, next) {
         .catch(next);
 }
 function createSchema(req, res, next) {
-        const schema = Joi.object({
+    const schema = Joi.object({
         title: Joi.string().required(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
-        role: Joi.string().valid(Role.Admin, Role.User).required(),
+        role: Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).required(),
         email: Joi.string().email().required(),
         userName: Joi.string().required(),
         password: Joi.string().min(6).required(),
@@ -97,12 +97,12 @@ function updateSchema(req, res, next) {
 //====================Update role route===============================================
 function updateRole(req, res, next) {
     userService.update(req.params.id, req.body)
-    .then(() => res.json({ message: 'Role updated' }))
-    .catch(next);
+        .then(() => res.json({ message: 'Role updated' }))
+        .catch(next);
 }
 function updateRoleSchema(req, res, next) {
     const schema = Joi.object({
-        role: Joi.string().valid(Role.Admin, Role.User).empty('')
+        role: Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).empty('')
     })
     validateRequest(req, next, schema);
 }
@@ -141,19 +141,19 @@ function login(req, res, next) {
     const browserInfo = req.headers['user-agent'] || 'Unknown Browser';
 
     userService.login({ ...req.body, ipAddress, browserInfo })
-    .then(({ token }) => res.json({ token }))
-    .catch(next);
+        .then(({ token }) => res.json({ token }))
+        .catch(next);
 }
 function loginSchema(req, res, next) {
     const schema = Joi.object({
         userName: Joi.string().empty(),
         email: Joi.string().email().empty(),
         password: Joi.string().required()
-    }).xor('userName', 'email') 
+    }).xor('userName', 'email')
         .messages({
-        'object.missing': 'Either email or userName must be provided.',
-        'object.xor': 'Both email and userName cannot be provided at the same time.'
-    })
+            'object.missing': 'Either email or userName must be provided.',
+            'object.xor': 'Both email and userName cannot be provided at the same time.'
+        })
 
     validateRequest(req, next, schema);
 }
@@ -167,8 +167,8 @@ function logout(req, res, next) {// Assuming the user is authenticated and the `
         ipAddress,
         browserInfo
     })
-    .then(response => res.json(response))
-    .catch(next);
+        .then(response => res.json(response))
+        .catch(next);
 
 }
 
@@ -202,19 +202,19 @@ function getActivities(req, res, next) {
 }
 //===================Search Route========================================
 function search(req, res, next) {
-    const { email, title, firstName, lastName, role, fullName, status, dateCreated, lastDateLogin} = req.query;
+    const { email, title, firstName, lastName, role, fullName, status, dateCreated, lastDateLogin } = req.query;
 
     if (!email && !title && !firstName && !lastName && !role && !fullName && !status && !dateCreated && !lastDateLogin) {
         return res.status(400).json({ message: 'At least one search term is required' });
     }
 
-    userService.search({ email, title, firstName, lastName, role, fullName, status, dateCreated, lastDateLogin})
+    userService.search({ email, title, firstName, lastName, role, fullName, status, dateCreated, lastDateLogin })
         .then(users => res.json(users))  // 'users' will now include 'fullName'
         .catch(next);
 }
 function searchAll(req, res, next) {
-    const query = req.query.query; 
-    
+    const query = req.query.query;
+
     if (!query) {
         return res.status(400).json({ message: 'Search term is required' });
     }

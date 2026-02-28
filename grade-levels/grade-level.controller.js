@@ -32,18 +32,24 @@ module.exports = router;
 
 // ================= VALIDATION SCHEMAS =================
 function createGradeLevelSchema(req, res, next) {
-    const schema = Joi.object({ name: Joi.string().trim().required() });
+    const schema = Joi.object({
+        name: Joi.string().trim().required(),
+        academicLevel: Joi.string().trim().allow(null, '')
+    });
     validateRequest(req, next, schema);
 }
 
 function updateGradeLevelSchema(req, res, next) {
-    const schema = Joi.object({ name: Joi.string().trim().required() });
+    const schema = Joi.object({
+        name: Joi.string().trim().required(),
+        academicLevel: Joi.string().trim().allow(null, '')
+    });
     validateRequest(req, next, schema);
 }
 
 // ================= CONTROLLERS =================
 function getAllGradeLevels(req, res, next) {
-    gradeLevelService.getAllGradeLevel()
+    gradeLevelService.getAllGradeLevel(req.query.academicLevel)
         .then(data => res.json(data))
         .catch(next);
 }

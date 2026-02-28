@@ -193,7 +193,7 @@ paths:
   /accounts/register:
     post:
       summary: Register a new user account and send a verification email
-      description: The first account registered in the system is assigned the `Admin` role, other accounts are assigned the `User` role.
+      description: The first account registered in the system is assigned the `Admin` role, other accounts are assigned the `Teacher` role.
       operationId: register
       requestBody:
         required: true
@@ -463,7 +463,7 @@ paths:
                   example: "pass123"
                 role:
                   type: string
-                  enum: [Admin, User]
+                  enum: [Admin, Teacher, Coordinator]
               required:
                 - title
                 - firstName
@@ -597,7 +597,7 @@ paths:
                   example: "pass123"
                 role:
                   type: string
-                  enum: [Admin, User]
+                  enum: [Admin, Teacher, Coordinator]
       responses:
         "200":
           description: Account updated successfully. The details of the updated account are returned.
