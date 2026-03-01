@@ -96,22 +96,26 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 (async function initialize() {
+    console.log('--- DATABASE INITIALIZATION START ---');
     console.log(`Connecting to database at ${host}:${port} as ${user}...`);
     try {
         const connection = await mysql.createConnection({ host, port, user, password });
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
         await connection.end();
+        console.log('Database ensured (or creation skipped).');
     } catch (err) {
-        console.log('Database creation skipped or failed:', err.message);
+        console.log('Database creation step log:', err.message);
     }
 
     try {
         await sequelize.authenticate();
+        console.log('Connection has been established successfully.');
         await sequelize.sync({ alter: true });
         console.log('Database synced successfully!');
     } catch (err) {
-        console.error('Unable to connect to the database:', err.message);
+        console.error('DATABASE INITIALIZATION ERROR:', err.message);
     }
+    console.log('--- DATABASE INITIALIZATION END ---');
 })();
 
 module.exports = db;

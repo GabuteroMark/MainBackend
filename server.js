@@ -8,34 +8,26 @@ const cookieParser = require('cookie-parser');
 const errorHandler = require('_middleware/error-handler');
 
 // ================= MIDDLEWARE =================
-const allowedOrigins = [
-    'http://localhost:4200',
-    'https://frontend-teal-beta-77.vercel.app',
-    process.env.FRONTEND_URL
-].filter(Boolean);
-
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
-
-        // Very permissive check for Vercel and Localhost
-        const isVercel = origin.endsWith('.vercel.app');
-        const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
-        const isAllowed = allowedOrigins.includes(origin) || isVercel || isLocal;
-
-        if (isAllowed) {
+        // Allow local and Vercel origins
+        if (!origin ||
+            origin.includes('localhost') ||
+            origin.includes('127.0.0.1') ||
+            origin.endsWith('.vercel.app') ||
+            origin === process.env.FRONTEND_URL) {
             callback(null, true);
         } else {
             console.log(`CORS blocked for origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-    optionsSuccessStatus: 204
+    credentials: true
 }));
-app.options('*', cors()); // Enable pre-flight for all routes
+
+// Add a simple health check route (Before API routes)
+app.get('/health', (req, res) => res.send('OK'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -44,7 +36,6 @@ app.use(cookieParser());
 app.use('/download', express.static(path.join(__dirname, 'generated')));
 
 // ================= ROUTES =================
-// Mount all API routes at /api
 app.use('/api/grade-levels', require('./grade-levels/grade-level.controller'));
 app.use('/api', require('./subjects/subject.controller'));
 app.use('/api', require('./questions/question.controller'));
