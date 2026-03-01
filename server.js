@@ -1,4 +1,4 @@
-// server.js (fixed)
+require('dotenv').config();
 require('rootpath')();
 const express = require('express');
 const app = express();
@@ -10,8 +10,9 @@ const errorHandler = require('_middleware/error-handler');
 // ================= MIDDLEWARE =================
 const allowedOrigins = [
     'http://localhost:4200',
-    'https://frontend-teal-beta-77.vercel.app'
-];
+    'https://frontend-teal-beta-77.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -36,7 +37,7 @@ app.use('/download', express.static(path.join(__dirname, 'generated')));
 // ================= ROUTES =================
 // Mount all API routes at /api
 app.use('/api/grade-levels', require('./grade-levels/grade-level.controller'));
-app.use('/api', require('./subjects/subject.controller')); 
+app.use('/api', require('./subjects/subject.controller'));
 app.use('/api', require('./questions/question.controller'));
 app.use('/api/accounts', require('./accounts/account.controller'));
 // app.use('/api', require('./upload/upload.controller'));
