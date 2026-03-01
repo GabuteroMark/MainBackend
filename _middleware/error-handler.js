@@ -1,6 +1,13 @@
 module.exports = errorHandler;
 
 function errorHandler(err, req, res, next) {
+    // Ensure CORS headers are present even on errors
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
     switch (true) {
         case typeof err === 'string':
             const is404 = err.toLowerCase().endsWith('not found');

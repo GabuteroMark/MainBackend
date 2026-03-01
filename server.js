@@ -19,9 +19,10 @@ app.use(cors({
         // allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
 
-        const isAllowed = allowedOrigins.includes(origin) ||
-            origin.endsWith('.vercel.app') ||
-            origin.includes('localhost');
+        // Very permissive check for Vercel and Localhost
+        const isVercel = origin.endsWith('.vercel.app');
+        const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+        const isAllowed = allowedOrigins.includes(origin) || isVercel || isLocal;
 
         if (isAllowed) {
             callback(null, true);
@@ -30,8 +31,11 @@ app.use(cors({
             callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    optionsSuccessStatus: 204
 }));
+app.options('*', cors()); // Enable pre-flight for all routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
