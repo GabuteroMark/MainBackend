@@ -15,12 +15,7 @@ const sequelize = new Sequelize(database, user, password, {
     host,
     port,
     dialect: 'mysql',
-    logging: false,
-    dialectOptions: {
-        ssl: {
-            rejectUnauthorized: false
-        }
-    }
+    logging: false
 });
 
 // ================= MODELS =================
@@ -78,6 +73,17 @@ db.Question = sequelize.define('Question', {
     subjectId: { type: DataTypes.INTEGER, allowNull: false }
 });
 
+db.TopicRequest = sequelize.define('TopicRequest', {
+    accountId: { type: DataTypes.INTEGER, allowNull: false },
+    gradeLevelId: { type: DataTypes.INTEGER, allowNull: false },
+    subjectId: { type: DataTypes.INTEGER, allowNull: false },
+    fileName: { type: DataTypes.STRING, allowNull: false },
+    filePath: { type: DataTypes.STRING, allowNull: false },
+    status: { type: DataTypes.STRING, defaultValue: 'Pending' }, // Pending, Approved, Rejected
+    aiStatus: { type: DataTypes.STRING, defaultValue: 'Idle' },  // Idle, Processing, Completed, Failed
+    remarks: { type: DataTypes.TEXT, allowNull: true }
+});
+
 // ================= ASSOCIATIONS =================
 db.Account.hasOne(db.Preferences, { foreignKey: 'AccountId', onDelete: 'CASCADE' });
 db.Preferences.belongsTo(db.Account, { foreignKey: 'AccountId' });
@@ -85,12 +91,23 @@ db.Account.hasMany(db.RefreshToken, { foreignKey: 'AccountId', onDelete: 'CASCAD
 db.RefreshToken.belongsTo(db.Account, { foreignKey: 'AccountId' });
 db.Account.hasMany(db.ActivityLog, { foreignKey: 'AccountId', onDelete: 'CASCADE' });
 db.ActivityLog.belongsTo(db.Account, { foreignKey: 'AccountId' });
+
 db.GradeLevel.hasMany(db.Subject, { foreignKey: 'gradeLevelId', as: 'subjects', onDelete: 'CASCADE' });
 db.Subject.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId', as: 'gradeLevel' });
+
 db.GradeLevel.hasMany(db.Question, { foreignKey: 'gradeLevelId', onDelete: 'CASCADE' });
 db.Question.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId' });
+
 db.Subject.hasMany(db.Question, { foreignKey: 'subjectId', onDelete: 'CASCADE' });
 db.Question.belongsTo(db.Subject, { foreignKey: 'subjectId' });
+
+// TopicRequest Associations
+db.Account.hasMany(db.TopicRequest, { foreignKey: 'accountId', onDelete: 'CASCADE' });
+db.TopicRequest.belongsTo(db.Account, { foreignKey: 'accountId' });
+db.GradeLevel.hasMany(db.TopicRequest, { foreignKey: 'gradeLevelId', onDelete: 'CASCADE' });
+db.TopicRequest.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId' });
+db.Subject.hasMany(db.TopicRequest, { foreignKey: 'subjectId', onDelete: 'CASCADE' });
+db.TopicRequest.belongsTo(db.Subject, { foreignKey: 'subjectId' });
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
