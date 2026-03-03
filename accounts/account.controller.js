@@ -46,9 +46,11 @@ function authenticateSchema(req, res, next) {
 
 function authenticate(req, res, next) {
     const { email, password } = req.body;
-    accountService.authenticate({ email, password })
-        .then(account => {
+    const ipAddress = req.ip;
+    accountService.authenticate({ email, password, ipAddress })
+        .then(({ refreshToken, ...account }) => {
             if (!account) return res.status(400).json({ message: 'Email or password is incorrect' });
+            setTokenCookie(res, refreshToken);
             res.json(account);
         })
         .catch(next);

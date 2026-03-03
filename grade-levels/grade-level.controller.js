@@ -21,13 +21,6 @@ router.put('/:id', updateGradeLevelSchema, updateGradeLevel);
 // DELETE grade level
 router.delete('/:id', deleteGradeLevel);
 
-// ================= SUBJECT ROUTES =================
-// Note: prefixed with /:gradeLevelId/subjects
-router.get('/:gradeLevelId/subjects', getSubjectsByGradeLevel);
-router.post('/:gradeLevelId/subjects', createSubject);
-router.put('/:gradeLevelId/subjects/:subjectId', updateSubject);
-router.delete('/:gradeLevelId/subjects/:subjectId', deleteSubject);
-
 module.exports = router;
 
 // ================= VALIDATION SCHEMAS =================
@@ -76,41 +69,4 @@ function deleteGradeLevel(req, res, next) {
     gradeLevelService.deleteGradeLevel(req.params.id)
         .then(() => res.json({ message: 'Grade Level deleted' }))
         .catch(next);
-}
-
-// ================= SUBJECT CONTROLLERS =================
-async function getSubjectsByGradeLevel(req, res, next) {
-    try {
-        const subjects = await gradeLevelService.getSubjectsByGradeLevel(req.params.gradeLevelId);
-        res.json(subjects);
-    } catch (err) { next(err); }
-}
-
-async function createSubject(req, res, next) {
-    try {
-        const subject = await gradeLevelService.addSubject(
-            req.params.gradeLevelId,
-            req.body.name
-        );
-        res.status(201).json(subject);
-    } catch (err) { next(err); }
-}
-
-async function updateSubject(req, res, next) {
-    try {
-        const { gradeLevelId, subjectId } = req.params;
-        const { name } = req.body;
-        if (!name || !name.trim()) return res.status(400).json({ message: 'Subject name required' });
-
-        const updated = await gradeLevelService.updateSubject(gradeLevelId, subjectId, name.trim());
-        res.json(updated);
-    } catch (err) { next(err); }
-}
-
-async function deleteSubject(req, res, next) {
-    try {
-        const { gradeLevelId, subjectId } = req.params;
-        await gradeLevelService.deleteSubject(gradeLevelId, subjectId);
-        res.json({ message: 'Subject deleted' });
-    } catch (err) { next(err); }
 }

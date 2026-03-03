@@ -6,17 +6,17 @@ const validateRequest = require('_middleware/validate-request');
 
 // ================= SUBJECT ROUTES =================
 
-// GET all subjects for a grade level
-router.get('/grade-levels/:gradeLevelId/subjects', getSubjectsByGradeLevel);
+// GET all subjects for a section
+router.get('/sections/:sectionId/subjects', getSubjectsBySection);
 
 // POST add a new subject
-router.post('/grade-levels/:gradeLevelId/subjects', createSubjectSchema, createSubject);
+router.post('/sections/:sectionId/subjects', createSubjectSchema, createSubject);
 
 // PUT update a subject
-router.put('/grade-levels/:gradeLevelId/subjects/:subjectId', updateSubjectSchema, updateSubject);
+router.put('/sections/:sectionId/subjects/:subjectId', updateSubjectSchema, updateSubject);
 
 // DELETE a subject
-router.delete('/grade-levels/:gradeLevelId/subjects/:subjectId', deleteSubject);
+router.delete('/sections/:sectionId/subjects/:subjectId', deleteSubject);
 
 module.exports = router;
 
@@ -33,11 +33,11 @@ function updateSubjectSchema(req, res, next) {
 
 // ================= CONTROLLERS =================
 
-// Get all subjects for a grade level
-async function getSubjectsByGradeLevel(req, res, next) {
+// Get all subjects for a section
+async function getSubjectsBySection(req, res, next) {
     try {
-        const gradeLevelId = Number(req.params.gradeLevelId);
-        const subjects = await subjectService.getSubjectsByGradeLevel(gradeLevelId);
+        const sectionId = Number(req.params.sectionId);
+        const subjects = await subjectService.getSubjectsBySection(sectionId);
         res.json(subjects);
     } catch (err) { next(err); }
 }
@@ -45,11 +45,11 @@ async function getSubjectsByGradeLevel(req, res, next) {
 // Add a new subject
 async function createSubject(req, res, next) {
     try {
-        const gradeLevelId = Number(req.params.gradeLevelId);
+        const sectionId = Number(req.params.sectionId);
         const name = req.body.name;
-        const subject = await subjectService.addSubject(gradeLevelId, name);
+        const subject = await subjectService.addSubject(sectionId, name);
         res.status(201).json(subject);
-    } catch (err) { 
+    } catch (err) {
         console.error('Error creating subject:', err.message || err);
         res.status(400).json({ message: err.message || 'Failed to create subject' });
     }
@@ -58,12 +58,12 @@ async function createSubject(req, res, next) {
 // Update a subject
 async function updateSubject(req, res, next) {
     try {
-        const gradeLevelId = Number(req.params.gradeLevelId);
+        const sectionId = Number(req.params.sectionId);
         const subjectId = Number(req.params.subjectId);
         const name = req.body.name;
-        const updated = await subjectService.updateSubject(gradeLevelId, subjectId, name);
+        const updated = await subjectService.updateSubject(sectionId, subjectId, name);
         res.json(updated);
-    } catch (err) { 
+    } catch (err) {
         console.error('Error updating subject:', err.message || err);
         res.status(400).json({ message: err.message || 'Failed to update subject' });
     }
@@ -72,9 +72,9 @@ async function updateSubject(req, res, next) {
 // Delete a subject
 async function deleteSubject(req, res, next) {
     try {
-        const gradeLevelId = Number(req.params.gradeLevelId);
+        const sectionId = Number(req.params.sectionId);
         const subjectId = Number(req.params.subjectId);
-        const result = await subjectService.deleteSubject(gradeLevelId, subjectId);
+        const result = await subjectService.deleteSubject(sectionId, subjectId);
         res.json(result);
     } catch (err) {
         console.error('Error deleting subject:', err.message || err);

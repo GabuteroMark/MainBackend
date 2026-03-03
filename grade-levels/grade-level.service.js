@@ -6,9 +6,11 @@ module.exports = {
     createGradeLevel,
     updateGradeLevel,
     deleteGradeLevel,
-    getSubjectsByGradeLevel,
-    addSubject,
-    updateSubject
+    getAllGradeLevel,
+    getGradeLevelById,
+    createGradeLevel,
+    updateGradeLevel,
+    deleteGradeLevel
 };
 
 async function getAllGradeLevel(academicLevel) {
@@ -45,30 +47,4 @@ async function deleteGradeLevel(id) {
     await gradeLevel.destroy();
 }
 
-async function getSubjectsByGradeLevel(gradeLevelId) {
-    await getGradeLevelById(gradeLevelId);
-    return db.Subject.findAll({ where: { gradeLevelId } });
-}
 
-async function addSubject(gradeLevelId, name) {
-    if (!name) throw 'Subject name required';
-
-    await getGradeLevelById(gradeLevelId);
-
-    return db.Subject.create({
-        name: name.trim(),
-        gradeLevelId: Number(gradeLevelId)
-    });
-}
-
-async function updateSubject(gradeLevelId, subjectId, name) {
-    const subject = await db.Subject.findOne({
-        where: { id: subjectId, gradeLevelId }
-    });
-
-    if (!subject) throw 'Subject not found';
-
-    subject.name = name;
-    await subject.save();
-    return subject;
-}

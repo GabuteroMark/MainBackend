@@ -2,6 +2,9 @@ require('rootpath')();
 const db = require('_helpers/db');
 
 async function seed() {
+    console.log('Waiting for database logic to initialize...');
+    await new Promise(resolve => setTimeout(resolve, 8000)); // Wait for db.js auto-sync to finish
+
     console.log('Starting seed...');
     const academicLevels = ['Primary Education', 'Secondary Education', 'Senior High School', 'Tertiary Education'];
     const primaryGrades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6'];
@@ -16,27 +19,51 @@ async function seed() {
     ];
 
     try {
+        const staticSubjects = [
+            'FILIPINO',
+            'ENGLISH',
+            'MATHEMATICS',
+            'ARALING PANLIPUNAN',
+            'EDUKASYON SA PAGPAPAKATAO',
+            'MOTHER TONGUE BASED',
+            'MAPEH'
+        ];
+
+        // Helper to seed sections and subjects
+        const seedHierarchy = async (grades, academicLevel) => {
+            for (const name of grades) {
+                const [gradeLevel] = await db.GradeLevel.findOrCreate({
+                    where: { name, academicLevel },
+                    defaults: { name, academicLevel }
+                });
+
+                // Create a default Section for every Grade Level
+                const [section] = await db.Section.findOrCreate({
+                    where: { name: 'Section 1', gradeLevelId: gradeLevel.id },
+                    defaults: { name: 'Section 1', gradeLevelId: gradeLevel.id }
+                });
+
+                // If Grade 1 or 2, seed static subjects under Section 1
+                if (name === 'Grade 1' || name === 'Grade 2') {
+                    for (const subName of staticSubjects) {
+                        await db.Subject.findOrCreate({
+                            where: { name: subName, sectionId: section.id },
+                            defaults: { name: subName, sectionId: section.id, subjectStatus: 'active' }
+                        });
+                    }
+                }
+            }
+        };
+
         // Seed Primary
-        for (const name of primaryGrades) {
-            await db.GradeLevel.findOrCreate({
-                where: { name, academicLevel: 'Primary Education' },
-                defaults: { name, academicLevel: 'Primary Education' }
-            });
-        }
+        await seedHierarchy(primaryGrades, 'Primary Education');
+
         // Seed Secondary
-        for (const name of secondaryGrades) {
-            await db.GradeLevel.findOrCreate({
-                where: { name, academicLevel: 'Secondary Education' },
-                defaults: { name, academicLevel: 'Secondary Education' }
-            });
-        }
+        await seedHierarchy(secondaryGrades, 'Secondary Education');
+
         // Seed Senior High
-        for (const name of seniorHighGrades) {
-            await db.GradeLevel.findOrCreate({
-                where: { name, academicLevel: 'Senior High School' },
-                defaults: { name, academicLevel: 'Senior High School' }
-            });
-        }
+        await seedHierarchy(seniorHighGrades, 'Senior High School');
+
         // Seed Tertiary
         const tertiaryYearLevels = ['1st Year College', '2nd Year College', '3rd Year College', '4th Year College'];
         for (const name of tertiaryPrograms) {
@@ -45,11 +72,19 @@ async function seed() {
                 defaults: { name, academicLevel: 'Tertiary Education' }
             });
 
-            // Seed Year Levels (as Subjects) for each Tertiary Program
+            // For Tertiary, we can treat Year Levels as Sections? 
+            // Or one Section with Year Levels as Subjects. 
+            // The user mentioned "applicable only to grade 1 and 2" for the static subjects.
+            // Let's stick to Section 1 for consistency.
+            const [section] = await db.Section.findOrCreate({
+                where: { name: 'Section 1', gradeLevelId: gradeLevel.id },
+                defaults: { name: 'Section 1', gradeLevelId: gradeLevel.id }
+            });
+
             for (const yearLevel of tertiaryYearLevels) {
                 await db.Subject.findOrCreate({
-                    where: { name: yearLevel, gradeLevelId: gradeLevel.id },
-                    defaults: { name: yearLevel, gradeLevelId: gradeLevel.id }
+                    where: { name: yearLevel, sectionId: section.id },
+                    defaults: { name: yearLevel, sectionId: section.id }
                 });
             }
         }

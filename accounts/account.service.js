@@ -29,7 +29,7 @@ module.exports = {
     delete: _delete
 };
 
-async function authenticate({ email, password }) {
+async function authenticate({ email, password, ipAddress }) {
     const account = await db.Account
         .scope('withHash')
         .findOne({ where: { email } });
@@ -40,10 +40,13 @@ async function authenticate({ email, password }) {
     if (!isMatch) return null;
 
     const jwtToken = generateJwtToken(account);
+    const refreshToken = generateRefreshToken(account, ipAddress);
+    await refreshToken.save();
 
     return {
         ...basicDetails(account),
-        jwtToken
+        jwtToken,
+        refreshToken: refreshToken.token
     };
 }
 

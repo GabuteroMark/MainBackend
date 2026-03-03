@@ -56,10 +56,16 @@ db.GradeLevel = sequelize.define('GradeLevel', {
     academicLevel: { type: DataTypes.STRING, allowNull: true }
 });
 
+db.Section = sequelize.define('Section', {
+    name: { type: DataTypes.STRING, allowNull: false },
+    gradeLevelId: { type: DataTypes.INTEGER, allowNull: false }
+});
+
 db.Subject = sequelize.define('Subject', {
     name: { type: DataTypes.STRING, allowNull: false },
     subjectStatus: { type: DataTypes.STRING, defaultValue: 'active' },
-    gradeLevelId: { type: DataTypes.INTEGER, allowNull: false }
+    gradeLevelId: { type: DataTypes.INTEGER, allowNull: false },
+    sectionId: { type: DataTypes.INTEGER, allowNull: true }
 });
 
 db.Question = sequelize.define('Question', {
@@ -70,12 +76,14 @@ db.Question = sequelize.define('Question', {
     optionD: { type: DataTypes.STRING, allowNull: false },
     answer: { type: DataTypes.STRING, allowNull: false },
     gradeLevelId: { type: DataTypes.INTEGER, allowNull: false },
+    sectionId: { type: DataTypes.INTEGER, allowNull: false },
     subjectId: { type: DataTypes.INTEGER, allowNull: false }
 });
 
 db.TopicRequest = sequelize.define('TopicRequest', {
     accountId: { type: DataTypes.INTEGER, allowNull: false },
     gradeLevelId: { type: DataTypes.INTEGER, allowNull: false },
+    sectionId: { type: DataTypes.INTEGER, allowNull: false },
     subjectId: { type: DataTypes.INTEGER, allowNull: false },
     fileName: { type: DataTypes.STRING, allowNull: false },
     filePath: { type: DataTypes.STRING, allowNull: false },
@@ -92,12 +100,21 @@ db.RefreshToken.belongsTo(db.Account, { foreignKey: 'AccountId' });
 db.Account.hasMany(db.ActivityLog, { foreignKey: 'AccountId', onDelete: 'CASCADE' });
 db.ActivityLog.belongsTo(db.Account, { foreignKey: 'AccountId' });
 
-db.GradeLevel.hasMany(db.Subject, { foreignKey: 'gradeLevelId', as: 'subjects', onDelete: 'CASCADE' });
+// GradeLevel -> Section -> Subject
+db.GradeLevel.hasMany(db.Section, { foreignKey: 'gradeLevelId', as: 'sections', onDelete: 'CASCADE' });
+db.Section.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId', as: 'gradeLevel' });
+
+db.GradeLevel.hasMany(db.Subject, { foreignKey: 'gradeLevelId', as: 'allSubjects', onDelete: 'CASCADE' });
 db.Subject.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId', as: 'gradeLevel' });
 
+db.Section.hasMany(db.Subject, { foreignKey: 'sectionId', as: 'subjects', onDelete: 'CASCADE' });
+db.Subject.belongsTo(db.Section, { foreignKey: 'sectionId', as: 'section' });
+
+// Questions
 db.GradeLevel.hasMany(db.Question, { foreignKey: 'gradeLevelId', onDelete: 'CASCADE' });
 db.Question.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId' });
-
+db.Section.hasMany(db.Question, { foreignKey: 'sectionId', onDelete: 'CASCADE' });
+db.Question.belongsTo(db.Section, { foreignKey: 'sectionId' });
 db.Subject.hasMany(db.Question, { foreignKey: 'subjectId', onDelete: 'CASCADE' });
 db.Question.belongsTo(db.Subject, { foreignKey: 'subjectId' });
 
@@ -106,6 +123,8 @@ db.Account.hasMany(db.TopicRequest, { foreignKey: 'accountId', onDelete: 'CASCAD
 db.TopicRequest.belongsTo(db.Account, { foreignKey: 'accountId' });
 db.GradeLevel.hasMany(db.TopicRequest, { foreignKey: 'gradeLevelId', onDelete: 'CASCADE' });
 db.TopicRequest.belongsTo(db.GradeLevel, { foreignKey: 'gradeLevelId' });
+db.Section.hasMany(db.TopicRequest, { foreignKey: 'sectionId', onDelete: 'CASCADE' });
+db.TopicRequest.belongsTo(db.Section, { foreignKey: 'sectionId' });
 db.Subject.hasMany(db.TopicRequest, { foreignKey: 'subjectId', onDelete: 'CASCADE' });
 db.TopicRequest.belongsTo(db.Subject, { foreignKey: 'subjectId' });
 
