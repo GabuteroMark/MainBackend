@@ -23,6 +23,7 @@ module.exports = {
     logActivity,
     getAccountActivities,
     getAllActivityLogs,
+    getLatestUserActivities,
     update,
     updatePreferences,
     getPreferences,
@@ -43,6 +44,9 @@ async function authenticate({ email, password, ipAddress }) {
     const refreshToken = generateRefreshToken(account, ipAddress);
     await refreshToken.save();
 
+    // Log login activity
+    await logActivity(account.id, 'Login', ipAddress, 'System Authenticate', `User ${email} logged in.`);
+
     return {
         ...basicDetails(account),
         jwtToken,
@@ -60,33 +64,12 @@ async function logActivity(AccountId, actionType, ipAddress, browserInfo, update
             timestamp: new Date()
         });
 
-        // Count the number of logs for the user
-        const logCount = await db.ActivityLog.count({ where: { AccountId } });
+        // We removed the 10-log limit to allow for a more comprehensive history for the Admin.
+        // If at some point performance becomes an issue, we can implement a global cleanup (e.g., keep last 5000 logs total).
 
-        if (logCount > 10) {
-            // Find and delete the oldest logs
-            const logsToDelete = await db.ActivityLog.findAll({
-                where: { AccountId },
-                order: [['timestamp', 'ASC']],
-                limit: logCount - 10
-            });
-
-            if (logsToDelete.length > 0) {
-                const logIdsToDelete = logsToDelete.map(log => log.id);
-
-                await db.ActivityLog.destroy({
-                    where: {
-                        id: {
-                            [Op.in]: logIdsToDelete
-                        }
-                    }
-                });
-                console.log(`Deleted ${logIdsToDelete.length} oldest log(s) for user ${AccountId}.`);
-            }
-        }
     } catch (error) {
         console.error('Error logging activity:', error);
-        throw error;
+        // We don't throw here to avoid failing the main action (like login) just because logging failed
     }
 }
 // Add this new service function
@@ -147,6 +130,49 @@ async function getAllActivityLogs(filters = {}) {
         throw new Error('Error retrieving activity logs');
     }
 }
+
+async function getLatestUserActivities() {
+    try {
+        const accounts = await db.Account.findAll({
+            attributes: ['id', 'firstName', 'lastName', 'email', 'role']
+        });
+
+        const summaries = await Promise.all(accounts.map(async (account) => {
+            const lastLogin = await db.ActivityLog.findOne({
+                where: { AccountId: account.id, actionType: 'Login' },
+                order: [['timestamp', 'DESC']]
+            });
+
+            const lastLogout = await db.ActivityLog.findOne({
+                where: { AccountId: account.id, actionType: 'Logout' },
+                order: [['timestamp', 'DESC']]
+            });
+
+            const formatDate = (date) => {
+                if (!date) return 'Never';
+                return new Intl.DateTimeFormat('en-US', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                }).format(new Date(date));
+            };
+
+            return {
+                userId: account.id,
+                userName: `${account.firstName} ${account.lastName}`,
+                userEmail: account.email,
+                userRole: account.role,
+                lastLogin: formatDate(lastLogin?.timestamp),
+                lastLogout: formatDate(lastLogout?.timestamp)
+            };
+        }));
+
+        return summaries;
+    } catch (error) {
+        console.error('Error retrieving latest user activities:', error);
+        throw new Error('Error retrieving user activity summary');
+    }
+}
+
 async function getAccountActivities(AccountId, filters = {}) {
     const account = await getAccount(AccountId);
     if (!account) throw new Error('User not found');
@@ -201,9 +227,13 @@ async function refreshToken(req, res, next) {
 async function revokeToken({ token, ipAddress }) {
     const refreshToken = await getRefreshToken(token);
 
-    refreshToken.revoked = Date.now();
+    // revoke token and save
+    refreshToken.revoked = new Date();
     refreshToken.revokedByIp = ipAddress;
     await refreshToken.save();
+
+    // Log logout activity
+    await logActivity(refreshToken.AccountId, 'Logout', ipAddress, 'System Logout', 'User logged out.');
 }
 async function register(params, origin) {
     if (params.firstName) params.firstName = formatName(params.firstName);
@@ -233,6 +263,8 @@ async function register(params, origin) {
     // Save the preferences for the user
     await db.Preferences.create(preferencesData);
 
+    // Log registration activity
+    await logActivity(account.id, 'User Registration', 'Unknown IP', 'Web Browser', `User ${params.email} registered.`);
 
     await sendVerificationEmail(account, origin);
 }
@@ -244,6 +276,9 @@ async function verifyEmail({ token }) {
     account.verified = Date.now();
     account.verificationToken = null;
     await account.save();
+
+    // Log email verification
+    await logActivity(account.id, 'Email Verification', 'Unknown IP', 'System Verification', `User ${account.email} verified their email.`);
 }
 async function forgotPassword({ email }, origin) {
     const account = await db.Account.findOne({ where: { email } });
@@ -282,7 +317,7 @@ async function resetPassword({ token, password }, ipAddress, browserInfo) {
     await account.save();
 
     try {
-        await logActivity(account.id, 'password_reset', ipAddress, browserInfo);
+        await logActivity(account.id, 'Password Reset', ipAddress, browserInfo, `Password reset for user ${account.email}.`);
     } catch (error) {
         console.error('Error logging activity:', error);
     }
@@ -329,7 +364,12 @@ async function create(params) {
     });
 
     // Return the basic details of the created account
-    return basicDetails(account);
+    const details = basicDetails(account);
+
+    // Log account creation by admin
+    await logActivity(account.id, 'Account Created', 'Unknown IP', 'Admin Portal', `Account for ${account.email} created by Admin.`);
+
+    return details;
 }
 async function update(id, params, ipAddress, browserInfo) {
     if (params.firstName) params.firstName = formatName(params.firstName);
@@ -448,8 +488,8 @@ function formatName(name) {
     return name.split(' ').map(word => word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '').join(' ');
 }
 function basicDetails(account) {
-    const { id, title, firstName, lastName, email, phoneNumber, role, created, updated, isVerified, BranchId } = account;
-    return { id, title, firstName, lastName, email, phoneNumber, role, created, updated, isVerified, BranchId };
+    const { id, title, firstName, lastName, email, phoneNumber, role, assignedLevel, created, updated, isVerified, BranchId } = account;
+    return { id, title, firstName, lastName, email, phoneNumber, role, assignedLevel, created, updated, isVerified, BranchId };
 }
 async function sendVerificationEmail(account, origin) {
     let message;

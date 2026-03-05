@@ -26,6 +26,7 @@ router.put('/:id/preferences', authorize(), updatePreferences);
 router.get('/', authorize(Role.Admin), getAll);
 router.post('/:id/activity', authorize(), getActivities);
 router.get('/activity-logs', authorize(Role.Admin), getAllActivityLogs);
+router.get('/latest-activities', authorize(Role.Admin), getLatestActivities);
 router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
@@ -202,7 +203,8 @@ function createSchema(req, res, next) {
         phoneNumber: Joi.string().length(11).pattern(/^(09|\+639)\d{9}$/).required(),
         password: Joi.string().min(6).required(),
         confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
-        role: Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).required()
+        role: Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).required(),
+        assignedLevel: Joi.string().valid('Primary Education', 'Secondary Education', 'Senior High School', 'Tertiary Education').allow('', null).optional()
     });
     validateRequest(req, next, schema);
 }
@@ -225,6 +227,7 @@ function updateSchema(req, res, next) {
     };
     if (req.user.role === Role.Admin) {
         schemaRules.role = Joi.string().valid(Role.Admin, Role.Teacher, Role.Coordinator).empty('');
+        schemaRules.assignedLevel = Joi.string().valid('Primary Education', 'Secondary Education', 'Senior High School', 'Tertiary Education').allow('', null).optional();
     }
     const schema = Joi.object(schemaRules).with('password', 'confirmPassword');
     validateRequest(req, next, schema);
@@ -263,6 +266,12 @@ function getAllActivityLogs(req, res, next) {
     const filters = { actionType: req.query.actionType, startDate: req.query.startDate, endDate: req.query.endDate, userId: req.query.userId };
     accountService.getAllActivityLogs(filters)
         .then(logs => res.json({ success: true, data: logs }))
+        .catch(next);
+}
+
+function getLatestActivities(req, res, next) {
+    accountService.getLatestUserActivities()
+        .then(activities => res.json({ success: true, data: activities }))
         .catch(next);
 }
 

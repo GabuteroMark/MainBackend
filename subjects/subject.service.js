@@ -59,8 +59,14 @@ async function updateSubject(sectionId, subjectId, name) {
 }
 
 async function deleteSubject(sectionId, subjectId) {
+    const section = await db.Section.findByPk(sectionId);
+    if (!section) throw new Error('Section not found');
+
     const subject = await db.Subject.findOne({
-        where: { id: subjectId, sectionId }
+        where: {
+            id: subjectId,
+            gradeLevelId: section.gradeLevelId
+        }
     });
     if (!subject) throw new Error('Subject not found');
 

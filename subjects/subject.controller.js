@@ -74,10 +74,12 @@ async function deleteSubject(req, res, next) {
     try {
         const sectionId = Number(req.params.sectionId);
         const subjectId = Number(req.params.subjectId);
+        console.log(`[DELETE] Attempting to delete subject ${subjectId} from section ${sectionId}`);
         const result = await subjectService.deleteSubject(sectionId, subjectId);
+        console.log(`[DELETE] Success:`, result);
         res.json(result);
     } catch (err) {
-        console.error('Error deleting subject:', err.message || err);
+        console.error('[DELETE] Error deleting subject:', err.message || err);
         res.status(400).json({ message: err.message || 'Failed to delete subject' });
     }
 }
