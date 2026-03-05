@@ -14,24 +14,29 @@ async function getById(id) {
     return section;
 }
 
-async function getSectionsByGradeLevel(gradeLevelId) {
+async function getSectionsByGradeLevel(gradeLevelId, strand) {
     const gradeLevel = await db.GradeLevel.findByPk(gradeLevelId);
     if (!gradeLevel) throw new Error('Grade Level not found');
-    return db.Section.findAll({ where: { gradeLevelId } });
+
+    const where = { gradeLevelId };
+    if (strand) where.strand = strand;
+
+    return db.Section.findAll({ where });
 }
 
-async function addSection(gradeLevelId, name) {
+async function addSection(gradeLevelId, name, strand) {
     if (!name || !name.trim()) throw new Error('Section name required');
     const gradeLevel = await db.GradeLevel.findByPk(gradeLevelId);
     if (!gradeLevel) throw new Error('Grade Level not found');
 
     return db.Section.create({
         name: name.trim(),
-        gradeLevelId
+        gradeLevelId,
+        strand: strand || null
     });
 }
 
-async function updateSection(gradeLevelId, sectionId, name) {
+async function updateSection(gradeLevelId, sectionId, name, strand) {
     const section = await db.Section.findOne({
         where: { id: sectionId, gradeLevelId }
     });
@@ -39,6 +44,8 @@ async function updateSection(gradeLevelId, sectionId, name) {
     if (!name || !name.trim()) throw new Error('Section name required');
 
     section.name = name.trim();
+    if (strand !== undefined) section.strand = strand || null;
+
     await section.save();
     return section;
 }

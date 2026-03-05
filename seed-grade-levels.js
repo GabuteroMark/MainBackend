@@ -19,13 +19,25 @@ async function seed() {
     ];
 
     try {
-        const staticSubjects = [
+        const staticSubjectsG1to3 = [
+            'SCIENCE',
             'FILIPINO',
             'ENGLISH',
             'MATHEMATICS',
             'ARALING PANLIPUNAN',
             'EDUKASYON SA PAGPAPAKATAO',
             'MOTHER TONGUE BASED',
+            'MAPEH'
+        ];
+
+        const staticSubjectsG4to6 = [
+            'SCIENCE',
+            'FILIPINO',
+            'ENGLISH',
+            'MATHEMATICS',
+            'ARALING PANLIPUNAN',
+            'EDUKASYON SA PAGPAPAKATAO',
+            'HOME ECONOMICS AND LIVELIHOOD EDUCATION',
             'MAPEH'
         ];
 
@@ -43,9 +55,19 @@ async function seed() {
                     defaults: { name: 'Section 1', gradeLevelId: gradeLevel.id }
                 });
 
-                // If Grade 1 or 2, seed static subjects under Section 1
-                if (name === 'Grade 1' || name === 'Grade 2') {
-                    for (const subName of staticSubjects) {
+                // If Grade 1, 2, or 3, seed static subjects under Section 1
+                if (name === 'Grade 1' || name === 'Grade 2' || name === 'Grade 3') {
+                    for (const subName of staticSubjectsG1to3) {
+                        await db.Subject.findOrCreate({
+                            where: { name: subName, sectionId: section.id },
+                            defaults: { name: subName, sectionId: section.id, subjectStatus: 'active' }
+                        });
+                    }
+                }
+
+                // If Grade 4, 5, or 6
+                if (name === 'Grade 4' || name === 'Grade 5' || name === 'Grade 6') {
+                    for (const subName of staticSubjectsG4to6) {
                         await db.Subject.findOrCreate({
                             where: { name: subName, sectionId: section.id },
                             defaults: { name: subName, sectionId: section.id, subjectStatus: 'active' }

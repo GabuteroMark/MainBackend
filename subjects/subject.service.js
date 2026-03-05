@@ -35,8 +35,9 @@ async function addSubject(sectionId, name) {
     if (!section) throw new Error('Section not found');
 
     // Auto-share subjects for Grade 1 and Grade 2
+    // Auto-share subjects for Grade 1, Grade 2, and Grade 3
     const gradeLevelName = section.gradeLevel?.name || '';
-    const isSharedGrade = gradeLevelName.includes('Grade 1') || gradeLevelName.includes('Grade 2') || [46, 47].includes(section.gradeLevelId);
+    const isSharedGrade = gradeLevelName.includes('Grade 1') || gradeLevelName.includes('Grade 2') || gradeLevelName.includes('Grade 3') || gradeLevelName.includes('Grade 4') || [46, 47].includes(section.gradeLevelId);
 
     return db.Subject.create({
         name: name.trim(),

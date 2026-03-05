@@ -58,7 +58,8 @@ db.GradeLevel = sequelize.define('GradeLevel', {
 
 db.Section = sequelize.define('Section', {
     name: { type: DataTypes.STRING, allowNull: false },
-    gradeLevelId: { type: DataTypes.INTEGER, allowNull: false }
+    gradeLevelId: { type: DataTypes.INTEGER, allowNull: false },
+    strand: { type: DataTypes.STRING, allowNull: true }
 });
 
 db.Subject = sequelize.define('Subject', {

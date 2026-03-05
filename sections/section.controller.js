@@ -22,33 +22,44 @@ async function getSectionById(req, res, next) {
 
 // Validation
 function createSectionSchema(req, res, next) {
-    const schema = Joi.object({ name: Joi.string().trim().required() });
+    const schema = Joi.object({
+        name: Joi.string().trim().required(),
+        strand: Joi.string().trim().allow('', null)
+    });
     validateRequest(req, next, schema);
 }
 
 function updateSectionSchema(req, res, next) {
-    const schema = Joi.object({ name: Joi.string().trim().required() });
+    const schema = Joi.object({
+        name: Joi.string().trim().required(),
+        strand: Joi.string().trim().allow('', null)
+    });
     validateRequest(req, next, schema);
 }
 
 // Controllers
 async function getSectionsByGradeLevel(req, res, next) {
     try {
-        const sections = await sectionService.getSectionsByGradeLevel(req.params.gradeLevelId);
+        const sections = await sectionService.getSectionsByGradeLevel(req.params.gradeLevelId, req.query.strand);
         res.json(sections);
     } catch (err) { next(err); }
 }
 
 async function createSection(req, res, next) {
     try {
-        const section = await sectionService.addSection(req.params.gradeLevelId, req.body.name);
+        const section = await sectionService.addSection(req.params.gradeLevelId, req.body.name, req.body.strand);
         res.status(201).json(section);
     } catch (err) { next(err); }
 }
 
 async function updateSection(req, res, next) {
     try {
-        const updated = await sectionService.updateSection(req.params.gradeLevelId, req.params.sectionId, req.body.name);
+        const updated = await sectionService.updateSection(
+            req.params.gradeLevelId,
+            req.params.sectionId,
+            req.body.name,
+            req.body.strand
+        );
         res.json(updated);
     } catch (err) { next(err); }
 }
