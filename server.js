@@ -8,18 +8,24 @@ const cookieParser = require('cookie-parser');
 const errorHandler = require('_middleware/error-handler');
 
 // ================= MIDDLEWARE =================
+const allowedOrigins = [
+    'http://localhost:4200',
+    'http://localhost:4000',
+    'https://frontend-teal-beta-77.vercel.app'
+];
+
 app.use(cors({
     origin: function (origin, callback) {
         // Allow local and Vercel origins
         if (!origin ||
+            allowedOrigins.includes(origin) ||
             origin.includes('localhost') ||
             origin.includes('127.0.0.1') ||
-            origin.endsWith('.vercel.app') ||
-            origin === process.env.FRONTEND_URL) {
+            origin.endsWith('.vercel.app')) {
             callback(null, true);
         } else {
             console.log(`CORS blocked for origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            callback(null, false); // Just refuse, don't throw an Error
         }
     },
     credentials: true
